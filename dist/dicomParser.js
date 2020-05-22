@@ -1,4 +1,4 @@
-/*! dicom-parser - 1.8.3 - 2019-10-20 | (c) 2017 Chris Hafey | https://github.com/cornerstonejs/dicomParser */
+/*! dicom-parser - 1.8.5 - 2020-05-22 | (c) 2017 Chris Hafey | https://github.com/cornerstonejs/dicomParser */
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -74,7 +74,7 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/ 	var hotApplyOnUpdate = true;
 /******/ 	// eslint-disable-next-line no-unused-vars
-/******/ 	var hotCurrentHash = "63915217fca543f2caa0";
+/******/ 	var hotCurrentHash = "d36835904f61145dfb2b";
 /******/ 	var hotRequestTimeout = 10000;
 /******/ 	var hotCurrentModuleData = {};
 /******/ 	var hotCurrentChildModule;
@@ -17147,13 +17147,17 @@ var _findAndSetUNElementLength = __webpack_require__(/*! ./findAndSetUNElementLe
 
 var _findAndSetUNElementLength2 = _interopRequireDefault(_findAndSetUNElementLength);
 
-var _findItemDelimitationItem = __webpack_require__(/*! ./findItemDelimitationItem.js */ "./findItemDelimitationItem.js");
+var _readSequenceElementImplicit = __webpack_require__(/*! ./readSequenceElementImplicit.js */ "./readSequenceElementImplicit.js");
 
-var _findItemDelimitationItem2 = _interopRequireDefault(_findItemDelimitationItem);
+var _readSequenceElementImplicit2 = _interopRequireDefault(_readSequenceElementImplicit);
 
 var _readTag = __webpack_require__(/*! ./readTag.js */ "./readTag.js");
 
 var _readTag2 = _interopRequireDefault(_readTag);
+
+var _findItemDelimitationItem = __webpack_require__(/*! ./findItemDelimitationItem.js */ "./findItemDelimitationItem.js");
+
+var _findItemDelimitationItem2 = _interopRequireDefault(_findItemDelimitationItem);
 
 var _readSequenceElementExplicit = __webpack_require__(/*! ./readSequenceElementExplicit.js */ "./readSequenceElementExplicit.js");
 
@@ -17217,7 +17221,7 @@ function readDicomElementExplicit(byteStream, warnings, untilTag) {
 
       return element;
     } else if (element.vr === 'UN') {
-      (0, _findAndSetUNElementLength2.default)(byteStream, element);
+      (0, _readSequenceElementImplicit2.default)(byteStream, element);
 
       return element;
     }
@@ -17260,6 +17264,8 @@ var _readSequenceElementImplicit2 = _interopRequireDefault(_readSequenceElementI
 var _readTag = __webpack_require__(/*! ./readTag.js */ "./readTag.js");
 
 var _readTag2 = _interopRequireDefault(_readTag);
+
+var _util = __webpack_require__(/*! ./util/util.js */ "./util/util.js");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -17309,7 +17315,7 @@ function readDicomElementImplicit(byteStream, untilTag, vrCallback) {
     return element;
   }
 
-  if (isSequence(element, byteStream, vrCallback)) {
+  if (isSequence(element, byteStream, vrCallback) && !(0, _util.isPrivateTag)(element.tag)) {
     // parse the sequence
     (0, _readSequenceElementImplicit2.default)(byteStream, element);
 
@@ -18599,28 +18605,30 @@ exports.default = parseTM;
  * @returns {*} javascript object with properties for hours, minutes, seconds and fractionalSeconds or undefined if no element or data.  Missing fields are set to undefined
  */
 function parseTM(time, validate) {
-  if (time.length >= 2) // must at least have HH
-    {
-      // 0123456789
-      // HHMMSS.FFFFFF
-      var hh = parseInt(time.substring(0, 2), 10);
-      var mm = time.length >= 4 ? parseInt(time.substring(2, 4), 10) : undefined;
-      var ss = time.length >= 6 ? parseInt(time.substring(4, 6), 10) : undefined;
-      var ffffff = time.length >= 8 ? parseInt(time.substring(7, 13), 10) : undefined;
+  if (time.length >= 2) {
+    // must at least have HH
+    // 0123456789
+    // HHMMSS.FFFFFF
+    var hh = parseInt(time.substring(0, 2), 10);
+    var mm = time.length >= 4 ? parseInt(time.substring(2, 4), 10) : undefined;
+    var ss = time.length >= 6 ? parseInt(time.substring(4, 6), 10) : undefined;
 
-      if (validate) {
-        if (isNaN(hh) || mm !== undefined && isNaN(mm) || ss !== undefined && isNaN(ss) || ffffff !== undefined && isNaN(ffffff) || hh < 0 || hh > 23 || mm && (mm < 0 || mm > 59) || ss && (ss < 0 || ss > 59) || ffffff && (ffffff < 0 || ffffff > 999999)) {
-          throw "invalid TM '" + time + "'";
-        }
+    var fractionalStr = time.length >= 8 ? time.substring(7, 13) : undefined;
+    var ffffff = fractionalStr ? parseInt(fractionalStr, 10) * Math.pow(10, 6 - fractionalStr.length) : undefined;
+
+    if (validate) {
+      if (isNaN(hh) || mm !== undefined && isNaN(mm) || ss !== undefined && isNaN(ss) || ffffff !== undefined && isNaN(ffffff) || hh < 0 || hh > 23 || mm && (mm < 0 || mm > 59) || ss && (ss < 0 || ss > 59) || ffffff && (ffffff < 0 || ffffff > 999999)) {
+        throw "invalid TM '" + time + "'";
       }
-
-      return {
-        hours: hh,
-        minutes: mm,
-        seconds: ss,
-        fractionalSeconds: ffffff
-      };
     }
+
+    return {
+      hours: hh,
+      minutes: mm,
+      seconds: ss,
+      fractionalSeconds: ffffff
+    };
+  }
 
   if (validate) {
     throw "invalid TM '" + time + "'";
@@ -18737,7 +18745,7 @@ exports.parsePN = parsePN;
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.default = '1.8.3';
+exports.default = '1.8.5';
 
 /***/ }),
 
